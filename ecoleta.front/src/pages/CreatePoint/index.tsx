@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './styles.css';
 import logo from '../../assets/logo.svg';
@@ -24,19 +24,26 @@ interface IBGECityResponse {
 }
 
 const CreatePoint = () => {
-    const [initialPosition, setInitialPosition] = useState<LatLng>(new LatLng(0, 0));
+    const [selectedPosition, setSelectedPosition] = useState<LatLng>(new LatLng(0, 0));
     const [renderMap, setRenderMap] = useState(false);
 
     const [items, setItems] = useState<item[]>([]);
     const [states, setStates] = useState<string[]>([]);
     const [cities, setCities] = useState<string[]>([]);
-
+    
     const [selectedState, setSelectedState] = useState('0');
     const [selectedCity, setSelectedCity] = useState('0');
+    const [selectedItems, setSelectedItems] = useState<number[]>([]);
+
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        whatsapp: ''
+    });
 
 
     function handleSelectPosition(value: LatLng) {
-        setInitialPosition(value);
+        setSelectedPosition(value);
     }
     
     function handleSelectState(event: ChangeEvent<HTMLSelectElement>) {
@@ -47,15 +54,52 @@ const CreatePoint = () => {
         setSelectedCity(event.target.value);
     }
 
+    function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
+        const { name, value } = event.target;
+        setFormData({...formData, [name]: value});
+    }
+
+    function handleSelectItem(id: number) {
+        const alreadySelected = selectedItems.findIndex(item => item === id);
+
+        if(alreadySelected >= 0) {
+            const filteredItems = selectedItems.filter(item => item !== id);
+            setSelectedItems(filteredItems);
+        }
+        else {
+            setSelectedItems([...selectedItems, id]);
+        }
+    }
+
+    async function handleSubmit(event: FormEvent){
+        event.preventDefault();
+
+        const { name, email, whatsapp } = formData;
+
+        const data = {
+            name,
+            email,
+            whatsapp,
+            uf: selectedState,
+            city: selectedCity,
+            latitude: selectedPosition.lat,
+            longitude: selectedPosition.lng,
+            items: selectedItems
+        }
+
+        await api.post('points', data);
+        alert('Collection point created!')
+    }
+
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(position => {
             const { latitude, longitude } = position.coords;
-            setInitialPosition(new LatLng(latitude, longitude));
+            setSelectedPosition(new LatLng(latitude, longitude));
             setRenderMap(true);
         },
         error => {
             // Default: Brasilia-DF
-            setInitialPosition(new LatLng(-15.7213698,-48.102167));
+            setSelectedPosition(new LatLng(-15.7213698,-48.102167));
             setRenderMap(true);
         });
     }, []);
@@ -92,7 +136,7 @@ const CreatePoint = () => {
                     Back to home
                 </Link>
             </header>
-            <form>
+            <form onSubmit={handleSubmit}>
                 <h1>Registration of the waste collection point.</h1>
 
                 <fieldset>
@@ -101,15 +145,15 @@ const CreatePoint = () => {
                     </legend>
                     <div className="field">
                         <label htmlFor="name">Entity Name</label>
-                        <input type="text" name="name" id="name" />
+                        <input onChange={handleInputChange} type="text" name="name" id="name" />
                         <div className="field-group">
                             <div className="field">
                                 <label htmlFor="email">Email</label>
-                                <input type="email" name="email" id="email" />
+                                <input onChange={handleInputChange} type="email" name="email" id="email" />
                             </div>
                             <div className="field">
                                 <label htmlFor="whatsapp">Whatsapp</label>
-                                <input type="text" name="whatsapp" id="whatsapp" />
+                                <input onChange={handleInputChange} type="text" name="whatsapp" id="whatsapp" />
                             </div>
                         </div>
                     </div>
@@ -120,13 +164,13 @@ const CreatePoint = () => {
                         <span>Select the address on the map</span>
                     </legend>
                     {renderMap && (
-                        <MapContainer center={initialPosition} zoom={15} scrollWheelZoom={true}>
+                        <MapContainer center={selectedPosition} zoom={15} scrollWheelZoom={true}>
                             <TileLayer
                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                             />
                             
-                            <ClickMarker position={initialPosition} setPosition={handleSelectPosition} />
+                            <ClickMarker position={selectedPosition} setPosition={handleSelectPosition} />
                         </MapContainer>
                     )}
                     <div className="field-group">
@@ -157,12 +201,14 @@ const CreatePoint = () => {
                     </legend>
                     <ul className="items-grid">
                         {items.map(item => (
-                            <li key={item.id}>
+                            <li 
+                                key={item.id} 
+                                onClick={() => handleSelectItem(item.id)} 
+                                className={selectedItems.includes(item.id) ? 'selected' : ''}>
                                 <img src={item.image_url} alt={item.title} />
                                 <span>{item.title}</span>
                             </li>
-                            ))
-                        }
+                            ))}
                     </ul>
                 </fieldset>
                 <button type="submit">
