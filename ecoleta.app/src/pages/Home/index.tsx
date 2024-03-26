@@ -1,29 +1,45 @@
 import React from 'react';
-import { Image, View, ImageBackground, StyleSheet, Text } from 'react-native';
+import { Feather as Icon } from '@expo/vector-icons';
+import { Image, View, ImageBackground, StyleSheet, Text, Pressable } from 'react-native';
+import { ParamListBase, useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 
 const Home = () => {
-    return (
-        <ImageBackground style={styles.container} 
-            source={require('../../assets/home-background.png')} 
-            imageStyle={{ width: 274, height: 368 }}
-            >
-            <View style={styles.main}>
-                <Image source={require('../../assets/logo.png')} />
-                <Text style={styles.title}>Your waste collection marketplace.</Text>
-                <Text style={styles.description}>We help people find collection points efficiently.</Text>
-            </View>
-            <view style={styles.button}>
+  const navigation = useNavigation<StackNavigationProp<ParamListBase>>();
 
-            </view>
-        </ImageBackground>
-    );
+  function handleNavigationToPoints() {
+    navigation.navigate('Points');
+  }
+
+  return (
+      <ImageBackground style={styles.container} 
+          source={require('../../assets/home-background.png')} 
+          imageStyle={{ width: 274, height: 368 }}
+          >
+          <View style={styles.main}>
+              <Image source={require('../../assets/logo.png')} />
+              <Text style={styles.title}>Your waste collection marketplace.</Text>
+              <Text style={styles.description}>We help people find collection points efficiently.</Text>
+          </View>
+          
+          <View style={styles.footer}>
+            <Pressable style={styles.button} onPress={handleNavigationToPoints}>
+              <View style={styles.buttonIcon}>
+                <Icon name='arrow-right' color='#FFF' size={24} />
+              </View>
+              <Text style={styles.buttonText}>
+                  Enter
+              </Text>
+            </Pressable>
+          </View>
+      </ImageBackground>
+  );
 }
 
 const styles = StyleSheet.create({
     container: {
       flex: 1,
       padding: 32,
-      backgroundColor: '#f0f05'
     },
   
     main: {
