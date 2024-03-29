@@ -8,7 +8,6 @@ interface ClickMarkerProps {
 }
 
 const ClickMarker = (props: ClickMarkerProps) => {
-    
     const map = useMapEvents({
       click(event) {
         const { lat, lng } = event.latlng;

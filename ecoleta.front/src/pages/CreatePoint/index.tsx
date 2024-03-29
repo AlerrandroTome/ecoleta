@@ -8,6 +8,7 @@ import { LatLng } from 'leaflet';
 import api from '../../services/api';
 import ibgeApi from '../../services/ibgeApi';
 import ClickMarker from './ClickMarker';
+import Dropzone from '../../components/dropzone';
 
 interface item {
     id: number,
@@ -34,6 +35,8 @@ const CreatePoint = () => {
     const [selectedState, setSelectedState] = useState('0');
     const [selectedCity, setSelectedCity] = useState('0');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
+
+    const [selectedFile, setSelectedFile] = useState<File>();
 
     const [formData, setFormData] = useState({
         name: '',
@@ -76,16 +79,24 @@ const CreatePoint = () => {
 
         const { name, email, whatsapp } = formData;
 
-        const data = {
-            name,
-            email,
-            whatsapp,
-            uf: selectedState,
-            city: selectedCity,
-            latitude: selectedPosition.lat,
-            longitude: selectedPosition.lng,
-            items: selectedItems
+        const data = new FormData();
+
+        data.append('name', name);
+        data.append('email', email);
+        data.append('whatsapp', whatsapp);
+        data.append('uf', selectedState);
+        data.append('city', selectedCity);
+        data.append('latitude', String(selectedPosition.lat));
+        data.append('longitude', String(selectedPosition.lng));
+        data.append('items', selectedItems.join(','));
+
+        if(selectedFile)
+        {
+            data.append('image', selectedFile);
         }
+
+
+        
 
         await api.post('points', data);
         alert('Collection point created!')
@@ -138,7 +149,7 @@ const CreatePoint = () => {
             </header>
             <form onSubmit={handleSubmit}>
                 <h1>Registration of the waste collection point.</h1>
-
+                <Dropzone onFileUploaded={setSelectedFile} />
                 <fieldset>
                     <legend>
                         <h2>Data</h2>
